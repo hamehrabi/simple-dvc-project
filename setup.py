@@ -12,8 +12,9 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/hamehrabi/simple-dvc-project",
     author_email="mehrabi.hamed@outlook.com",
-    package_dir={"": "src"},
-    packages=find_packages(where="src"),
+    # package_dir={"": "src"},
+    # packages=find_packages(where="src"),
+    packages=["src"],
     license="GNU",
     python_requires=">=3.8",
     install_requires=[

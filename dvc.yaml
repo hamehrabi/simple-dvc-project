@@ -1,0 +1,60 @@
+stages:
+  load_data:
+    cmd: python src/stage_01_load_and_save.py --config=params.yaml
+    deps:
+      - src/stage_01_load_and_save.py
+      - src/utils/common_utils.py
+    params:
+      - data_source.s3_source
+      - artifacts.raw_local_data
+    outs:
+      - artifacts/raw_local_data_dir/data.csv
+
+  split_data:
+    cmd: python src/stage_02_split_data.py --config=params.yaml
+    deps:
+      - src/stage_02_split_data.py
+      - artifacts/raw_local_data_dir/data.csv
+      - src/utils/common_utils.py
+    params:
+      - base.random_state
+      - base.test_size
+      - artifacts.raw_local_data
+      - artifacts.split_data.processed_data_dir
+      - artifacts.split_data.train_path
+      - artifacts.split_data.test_path
+    outs:
+      - artifacts/processed_data/train.csv
+      - artifacts/processed_data/test.csv
+
+  train:
+    cmd: python src/stage_03_train.py --config=params.yaml
+    deps:
+      - src/stage_03_train.py
+      - artifacts/processed_data/train.csv
+      - src/utils/common_utils.py
+    params:
+      - base.random_state
+      - base.target_col
+      - artifacts.split_data.train_path
+      - estimators.ElasticNet.params.alpha
+      - estimators.ElasticNet.params.l1_ratio
+    metrics: 
+      - artifacts/report/params.json:
+          cache: false
+    outs:
+      - artifacts/saved_models/model.joblib
+
+  evaluate:
+    cmd: python src/stage_04_evaluate.py --config=params.yaml
+    deps:
+      - src/stage_04_evaluate.py
+      - artifacts/processed_data/test.csv
+      - artifacts/saved_models/model.joblib
+      - src/utils/common_utils.py
+    params:
+      - base.target_col
+      - artifacts.split_data.test_path
+    metrics: 
+      - artifacts/report/scores.json:
+          cache: false
